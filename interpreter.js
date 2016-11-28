@@ -1,16 +1,7 @@
-//Thank you to Sigton for this partial interpreter
 var stack = [];
-var functions = {
-								'+':sum,
-								'-':sub,
-								'*':mult,
-								'/':div
-								};
-
-var digits = [0,1,2,3,4,5,6,7,8,9];
 
 var toNum = function(input){
-	if(isNan(Number(input))) {
+	if(isNaN(Number(input))) {
 		return input;
 	} else {
 		return Number(input);
@@ -57,12 +48,29 @@ var div = function() {
 	}
 }
 
-var print = function(data) {
+var print = function() {
+	output(pop());
+}
+
+var output = function(data) {
 	var ul = document.getElementById("list");
 	var li = document.createElement("li");
 	li.appendChild(document.createTextNode(data));
 	ul.appendChild(li);
 }
+
+var functions = {
+	'+':sum,
+	'-':sub,
+	'*':mult,
+	'/':div,
+};
+
+var nonreturn = {
+	'p':print
+};
+
+var digits = [0,1,2,3,4,5,6,7,8,9];
 
 var parse = function(code) {
 	
@@ -80,21 +88,24 @@ var parse = function(code) {
 			
 			var number = "";
 			
-			while (pointer < code.length && (c() in digits || (c() == '.' && '.' ! in number)) {
+			while ((pointer < code.length)&&((c() in digits)||(c() == '.' && !('.' in number)))) {
 				number += c();
 				pointer += 1;
 			}
 			pointer -= 1;
 			parsed.push(["push", toNum(number)]);
 		}
-			
-		if (c() in functions) {
+
+		if(c() in functions) {
 			parsed.push(["function", functions[c()]]);
 		}
 		
-		pointer += 1;
-		
+		if(c() in nonreturn) {
+			parsed.push(["nonreturn", nonreturn[c()]]);
 		}
+		
+		pointer += 1;
+
 	}
 	return parsed;
 }
@@ -108,8 +119,7 @@ var execute = function(code) {
 	}
 	
 	while (pointer < code.length) {
-		
-		if (c[0] == "push") {
+		if (c()[0] == "push") {
 			stack.push(c()[1]);
 		}
 		
@@ -117,15 +127,17 @@ var execute = function(code) {
 			stack.push(c()[1]());
 		}
 		
-		pointer += 1;
+		if (c()[0] == "nonreturn") {
+			c()[1]();
+		}
 		
-	}
-	if (stack.length) {
-		print(stack[stack.length-1]);
+		pointer += 1;
+		console.log(stack);
 	}
 }
 
 var run = function(code) {
 	var instructions = parse(code);
+	console.log(instructions);
 	execute(instructions);
 }
